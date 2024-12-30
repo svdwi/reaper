@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ghostsecurity/reaper/internal/config"
 	"log/slog"
 	"os"
 	"sync"
@@ -303,7 +304,8 @@ func (manager *AgentManager) runAgent() {
 
 		// Run the BOLA attack
 		manager.sendAgentMessage("Running the attack...")
-		err := fuzz.CreateAttack(function_model.Domain, excludedKeys, manager.Pool, manager.DB, 0, 0, 0)
+
+		err := fuzz.CreateAttack(function_model.Domain, excludedKeys, manager.Pool,manager.DB, 0, false, config.SharedAttackConfig)
 		if err != nil {
 			slog.Error("Failed to create fuzz attack", "error", err)
 		}

@@ -4,12 +4,12 @@ import (
 	"log/slog"
 	"strconv"
 
-	"github.com/gofiber/fiber/v2"
-
+	"github.com/ghostsecurity/reaper/internal/config"
 	"github.com/ghostsecurity/reaper/internal/database/models"
 	"github.com/ghostsecurity/reaper/internal/service"
 	"github.com/ghostsecurity/reaper/internal/tools/fuzz"
 	"github.com/ghostsecurity/reaper/internal/types"
+	"github.com/gofiber/fiber/v2"
 )
 
 func (h *Handler) GetEndpoints(c *fiber.Ctx) error {
@@ -64,6 +64,22 @@ func (h *Handler) CreateAttack(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "endpoint_id and params are required"})
 	}
 
+	attackConfig := config.SharedAttackConfig
+	// Modify enabled the attacks
+	attackConfig.HP = false
+	attackConfig.LP = false
+	attackConfig.NP = false
+	attackConfig.RPP = false
+	attackConfig.BPP = false
+	attackConfig.MR = false
+	attackConfig.RPW = false
+	attackConfig.BPW = false
+	attackConfig.RPS = false
+	attackConfig.RPSPP = false
+	attackConfig.JSON = false
+	attackConfig.FUZZ = true
+	attackConfig.ALL = false
+
 	// get hostname from endpoint
 	endpoint := models.Endpoint{}
 	err := h.db.First(&endpoint, atk.EndpointID).Error
@@ -72,7 +88,8 @@ func (h *Handler) CreateAttack(c *fiber.Ctx) error {
 	}
 
 	go func() {
-		err := fuzz.CreateAttack(endpoint.Hostname, atk.Params, h.pool, h.db, 100, 1000, 10)
+
+		err := fuzz.CreateAttack(endpoint.Hostname, atk.Params, h.pool, h.db, 0, false, attackConfig)
 		if err != nil {
 			slog.Error("[create attack]", "msg", "error creating attack", "error", err)
 		}
